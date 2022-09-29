@@ -146,7 +146,7 @@ void DirectX12ComputePipelineBuilder::build()
 DirectX12ComputePipelineBuilder& DirectX12ComputePipelineBuilder::shaderProgram(SharedPtr<DirectX12ShaderProgram> program)
 {
 #ifndef NDEBUG
-	if (m_impl->m_layout != nullptr)
+	if (m_impl->m_program != nullptr)
 		LITEFX_WARNING(DIRECTX12_LOG, "Another shader program has already been initialized and will be replaced. A pipeline can only have one shader program.");
 #endif
 
