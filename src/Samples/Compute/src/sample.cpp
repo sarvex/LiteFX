@@ -44,6 +44,7 @@ void initRenderGraph(TRenderBackend* backend, SharedPtr<IViewport> viewport, Sha
 {
     using RenderPass = TRenderBackend::render_pass_type;
     using RenderPipeline = TRenderBackend::render_pipeline_type;
+    using ComputePipeline = TRenderBackend::compute_pipeline_type;
     using PipelineLayout = TRenderBackend::pipeline_layout_type;
     using ShaderProgram = TRenderBackend::shader_program_type;
     using InputAssembler = TRenderBackend::input_assembler_type;
@@ -51,6 +52,15 @@ void initRenderGraph(TRenderBackend* backend, SharedPtr<IViewport> viewport, Sha
 
     // Get the default device.
     auto device = backend->device("Default");
+
+    // Create compute shader.
+    SharedPtr<ShaderProgram> computeProgram = device->buildShaderProgram()
+        .withComputeShaderModule("shaders/compute_cs." + FileExtensions<TRenderBackend>::SHADER);
+
+    // Build compute pipeline.
+    UniquePtr<ComputePipeline> computePipeline = device->buildComputePipeline("Compute")
+        .layout(computeProgram->reflectPipelineLayout())
+        .shaderProgram(computeProgram);
 
     // Create input assembler state.
     SharedPtr<InputAssembler> inputAssembler = device->buildInputAssembler()
@@ -89,6 +99,7 @@ void initRenderGraph(TRenderBackend* backend, SharedPtr<IViewport> viewport, Sha
     // Add the resources to the device state.
     device->state().add(std::move(renderPass));
     device->state().add(std::move(renderPipeline));
+    device->state().add(std::move(computePipeline));
 }
 
 void SampleApp::initBuffers(IRenderBackend* backend)
