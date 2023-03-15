@@ -148,7 +148,7 @@ void VulkanComputePipelineBuilder::build()
 VulkanComputePipelineBuilder& VulkanComputePipelineBuilder::shaderProgram(SharedPtr<VulkanShaderProgram> program)
 {
 #ifndef NDEBUG
-	if (m_impl->m_layout != nullptr)
+	if (m_impl->m_program != nullptr)
 		LITEFX_WARNING(VULKAN_LOG, "Another shader program has already been initialized and will be replaced. A pipeline can only have one shader program.");
 #endif
 
