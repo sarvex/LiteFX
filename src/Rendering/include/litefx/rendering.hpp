@@ -792,6 +792,8 @@ namespace LiteFX::Rendering {
         using pipeline_layout_type = render_pipeline_type::pipeline_layout_type;
         using descriptor_set_layout_type = pipeline_layout_type::descriptor_set_layout_type;
         using descriptor_set_type = descriptor_set_layout_type::descriptor_set_type;
+        using command_buffer_type = frame_buffer_type::command_buffer_type;
+        using barrier_type = command_buffer_type::barrier_type;
 
     public:
         virtual ~RenderPass() noexcept = default;
@@ -812,6 +814,9 @@ namespace LiteFX::Rendering {
         /// <inheritdoc />
         virtual void updateAttachments(const descriptor_set_type& descriptorSet) const = 0;
 
+        /// <inheritdoc />
+        virtual void begin(const UInt32& buffer, Span<std::reference_wrapper<const barrier_type>> barriers) = 0;
+
     private:
         virtual Array<const IFrameBuffer*> getFrameBuffers() const noexcept override {
             auto frameBuffers = this->frameBuffers();
@@ -825,6 +830,14 @@ namespace LiteFX::Rendering {
 
         virtual void setAttachments(const IDescriptorSet& descriptorSet) const override {
             this->updateAttachments(dynamic_cast<const descriptor_set_type&>(descriptorSet));
+        }
+
+        virtual void beginRenderPass(const UInt32& buffer, Span<std::reference_wrapper<const IBarrier>> barriers) {
+            auto actualBarriers = barriers |
+                std::views::transform([](std::reference_wrapper<const IBarrier> barrier) { return std::ref(dynamic_cast<const barrier_type&>(barrier.get())); }) |
+                ranges::to<Array<std::reference_wrapper<const barrier_type>>>();
+            
+            this->begin(buffer, actualBarriers);
         }
     };
 

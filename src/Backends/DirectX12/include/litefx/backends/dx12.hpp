@@ -1146,6 +1146,9 @@ namespace LiteFX::Rendering::Backends {
 		virtual void begin(const UInt32& buffer) override;
 
 		/// <inheritdoc />
+		virtual void begin(const UInt32& buffer, Span<std::reference_wrapper<const DirectX12Barrier>> barrier) override;
+
+		/// <inheritdoc />
 		virtual void end() const override;
 
 		/// <inheritdoc />

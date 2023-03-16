@@ -273,6 +273,11 @@ const MultiSamplingLevel& DirectX12RenderPass::multiSamplingLevel() const noexce
 
 void DirectX12RenderPass::begin(const UInt32& buffer)
 {
+    this->begin(buffer, { });
+}
+
+void DirectX12RenderPass::begin(const UInt32& buffer, Span<std::reference_wrapper<const DirectX12Barrier>> barriers)
+{
     // Only begin, if we are currently not running.
     if (m_impl->m_activeFrameBuffer != nullptr)
         throw RuntimeException("Unable to begin a render pass, that is already running. End the current pass first.");
@@ -299,6 +304,9 @@ void DirectX12RenderPass::begin(const UInt32& buffer)
     std::ranges::for_each(m_impl->m_renderTargets, [&transitionBarrier, &frameBuffer](const RenderTarget& renderTarget) { transitionBarrier.transition(const_cast<IDirectX12Image&>(frameBuffer->image(renderTarget.location())), renderTarget.type() != RenderTargetType::DepthStencil ? ResourceState::RenderTarget : ResourceState::DepthWrite); });
     beginCommandBuffer->barrier(transitionBarrier);
 
+    // Add custom barriers.
+    std::ranges::for_each(barriers, [&beginCommandBuffer](const DirectX12Barrier& barrier) { beginCommandBuffer->barrier(barrier); });
+
 #if defined(_DEBUG) && defined(_WIN64)   // Unfortunately, this only works in x64 for some reason.
     if (!m_impl->m_name.empty())
         ::BeginEvent(m_impl->m_device.graphicsQueue().handle(), "{0} Render Pass ", m_impl->m_name);
@@ -307,8 +315,8 @@ void DirectX12RenderPass::begin(const UInt32& buffer)
     // Begin a suspending render pass for the transition and a suspend-the-resume render pass on each command buffer of the frame buffer.
     std::as_const(*beginCommandBuffer).handle()->BeginRenderPass(std::get<0>(context).size(), std::get<0>(context).data(), std::get<1>(context).has_value() ? &std::get<1>(context).value() : nullptr, D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS);
     std::as_const(*beginCommandBuffer).handle()->EndRenderPass();
-    std::ranges::for_each(frameBuffer->commandBuffers(), [&context](const DirectX12CommandBuffer* commandBuffer) { 
-        commandBuffer->begin(); 
+    std::ranges::for_each(frameBuffer->commandBuffers(), [&context](const DirectX12CommandBuffer* commandBuffer) {
+        commandBuffer->begin();
         commandBuffer->handle()->BeginRenderPass(std::get<0>(context).size(), std::get<0>(context).data(), std::get<1>(context).has_value() ? &std::get<1>(context).value() : nullptr, D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS | D3D12_RENDER_PASS_FLAG_RESUMING_PASS);
     });
 }

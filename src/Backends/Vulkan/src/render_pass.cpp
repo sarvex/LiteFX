@@ -383,6 +383,11 @@ const MultiSamplingLevel& VulkanRenderPass::multiSamplingLevel() const noexcept
 
 void VulkanRenderPass::begin(const UInt32& buffer)
 {
+    this->begin(buffer, { });
+}
+
+void VulkanRenderPass::begin(const UInt32& buffer, Span<std::reference_wrapper<const VulkanBarrier>> barriers)
+{
     // Only begin, if we are currently not running.
     if (m_impl->m_activeFrameBuffer != nullptr)
         throw RuntimeException("Unable to begin a render pass, that is already running. End the current pass first.");
@@ -398,6 +403,9 @@ void VulkanRenderPass::begin(const UInt32& buffer)
     // Begin the command recording on the frame buffers command buffer. Before we can do that, we need to make sure it has not being executed anymore.
     m_impl->m_device.graphicsQueue().waitFor(frameBuffer->lastFence());
     commandBuffer->begin();
+
+    // Add custom barriers.
+    std::ranges::for_each(barriers, [&commandBuffer](const VulkanBarrier& barrier) { commandBuffer->barrier(barrier); });
 
     // Begin the render pass.
     VkRenderPassBeginInfo renderPassInfo{};

@@ -1146,6 +1146,9 @@ namespace LiteFX::Rendering::Backends {
 	public:
 		/// <inheritdoc />
 		virtual void begin(const UInt32& buffer) override;
+
+		/// <inheritdoc />
+		virtual void begin(const UInt32& buffer, Span<std::reference_wrapper<const VulkanBarrier>> barrier) override;
 		
 		/// <inheritdoc />
 		virtual void end() const override;

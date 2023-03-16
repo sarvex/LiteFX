@@ -4124,7 +4124,9 @@ namespace LiteFX::Rendering {
         /// </remarks>
         /// <param name="buffer">The back buffer to use. Typically this is the same as the value returned from <see cref="ISwapChain::swapBackBuffer" />.</param>
         /// <param name="barriers">The barriers to insert before starting the render pass.</param>
-        virtual void begin(const UInt32& buffer, Span<const IBarrier&> barriers) = 0;
+        void begin(const UInt32& buffer, Span<std::reference_wrapper<const IBarrier>> barriers) {
+            this->beginRenderPass(buffer, barriers);
+        }
 
         /// <summary>
         /// Ends the render pass.
@@ -4165,6 +4167,7 @@ namespace LiteFX::Rendering {
         virtual Array<const IFrameBuffer*> getFrameBuffers() const noexcept = 0;
         virtual Array<const IRenderPipeline*> getPipelines() const noexcept = 0;
         virtual void setAttachments(const IDescriptorSet& descriptorSet) const = 0;
+        virtual void beginRenderPass(const UInt32& buffer, Span<std::reference_wrapper<const IBarrier>> barriers) = 0;
     };
 
     /// <summary>
