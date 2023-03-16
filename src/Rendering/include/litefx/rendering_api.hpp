@@ -1194,6 +1194,27 @@ namespace LiteFX::Rendering {
         ReadWrite = 0x00000007,
 
         /// <summary>
+        /// The resource is used as a read-only storage or texel buffer by a compute shader.
+        /// </summary>
+        /// <remarks>
+        /// The following table contains the API-specific flags for each supported back-end.
+        /// 
+        /// <list type="table">
+        ///     <listheader>
+        ///         <term>DirectX 12 ❎</term>
+        ///         <term>Vulkan 🌋 (`VkAccessFlags`)</term>
+        ///         <term>Vulkan 🌋 (`VkImageLayout`) </term>
+        ///     </listheader>
+        ///     <item>
+        ///         <term>`D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`</term>
+        ///         <term>`VK_ACCESS_SHADER_READ_BIT`</term>
+        ///         <term>`VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL`</term>
+        ///     </item>
+        /// </list>
+        /// </remarks>
+        ComputeShaderReadOnly = 0x00000008,
+
+        /// <summary>
         /// The resource is used as a copy source.
         /// </summary>
         /// <remarks>
@@ -4092,6 +4113,18 @@ namespace LiteFX::Rendering {
         /// </summary>
         /// <param name="buffer">The back buffer to use. Typically this is the same as the value returned from <see cref="ISwapChain::swapBackBuffer" />.</param>
         virtual void begin(const UInt32& buffer) = 0;
+
+        /// <summary>
+        /// Begins the render pass.
+        /// </summary>
+        /// <remarks>
+        /// This overloads inserts barriers into the execution before actually starting the render pass by providing the <paramref name="barriers" /> parameter. This 
+        /// allows to make synchronization more accessible in some scenarios, for example when synchronizing compute and rendering workloads, executed on different
+        /// command queues.
+        /// </remarks>
+        /// <param name="buffer">The back buffer to use. Typically this is the same as the value returned from <see cref="ISwapChain::swapBackBuffer" />.</param>
+        /// <param name="barriers">The barriers to insert before starting the render pass.</param>
+        virtual void begin(const UInt32& buffer, Span<const IBarrier&> barriers) = 0;
 
         /// <summary>
         /// Ends the render pass.

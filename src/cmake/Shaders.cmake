@@ -295,7 +295,7 @@ FUNCTION(ADD_SHADER_MODULE module_name)
   CMAKE_PARSE_ARGUMENTS(SHADER "" "SOURCE;LANGUAGE;COMPILE_AS;SHADER_MODEL;TYPE;COMPILER;LIBRARY;COMPILE_OPTIONS" "INCLUDES" ${ARGN})
 
   IF(NOT SHADER_COMPILE_OPTIONS)
-    SET(SHADER_COMPILE_OPTIONS " ")  # This must be set to some valie, since all variable arguments are reserved for shader includes. A whitespace does not hurt.
+    SET(SHADER_COMPILE_OPTIONS " ")  # This must be set to some valid value, since all variable arguments are reserved for shader includes. A whitespace does not hurt.
   ENDIF(NOT SHADER_COMPILE_OPTIONS)
 
   # TODO: There's also the shader type ms (mesh shader) and as (amplification shader; used as a second ms stage) since shader model 6.5.

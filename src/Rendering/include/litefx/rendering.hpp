@@ -1026,7 +1026,7 @@ namespace LiteFX::Rendering {
         }
 
         virtual Array<UniquePtr<IImage>> getTextures(const UInt32& elements, const Format& format, const Size3d& size, const ImageDimensions& dimension, const UInt32& layers, const UInt32& levels, const MultiSamplingLevel& samples, const bool& allowWrite) const override { 
-            auto textures = this->getTextures(elements, format, size, dimension, layers, levels, samples, allowWrite);
+            auto textures = this->createTextures(elements, format, size, dimension, layers, levels, samples, allowWrite);
             Array<UniquePtr<IImage>> results;
             results.reserve(textures.size());
             std::move(std::begin(textures), std::end(textures), std::inserter(results, std::end(results)));
