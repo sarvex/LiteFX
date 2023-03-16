@@ -960,6 +960,7 @@ VkImageLayout LITEFX_VULKAN_API LiteFX::Rendering::Backends::Vk::getImageLayout(
 	case ResourceState::ReadOnly: return VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	case ResourceState::ReadWrite: return VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
 	case ResourceState::CopySource: return VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	case ResourceState::ComputeShaderReadOnly: return VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	case ResourceState::CopyDestination: return VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	case ResourceState::RenderTarget: return VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	case ResourceState::DepthRead: return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
@@ -982,6 +983,7 @@ VkAccessFlags LITEFX_VULKAN_API LiteFX::Rendering::Backends::Vk::getAccessFlags(
 	case ResourceState::ReadOnly: return VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
 	case ResourceState::ReadWrite: return VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT | VkAccessFlagBits::VK_ACCESS_SHADER_WRITE_BIT;
 	case ResourceState::CopySource: return VkAccessFlagBits::VK_ACCESS_TRANSFER_READ_BIT;
+	case ResourceState::ComputeShaderReadOnly: return VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
 	case ResourceState::CopyDestination: return VkAccessFlagBits::VK_ACCESS_TRANSFER_WRITE_BIT;
 	case ResourceState::RenderTarget: return VkAccessFlagBits::VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VkAccessFlagBits::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	case ResourceState::DepthRead: return VkAccessFlagBits::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
