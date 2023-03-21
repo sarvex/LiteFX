@@ -20,21 +20,24 @@ struct CameraData
     float4x4 ViewProjection;
 };
 
-struct TransformData
+struct Particle
 {
-    float4x4 Model;
+    float  distance;
+    float  velocity;
+    float2 position;
 };
 
-ConstantBuffer<CameraData>    camera    : register(b0, space0);
-ConstantBuffer<TransformData> transform : register(b0, space1);
+ConstantBuffer<CameraData> camera    : register(b0, space0);
+StructuredBuffer<Particle> particles : register(t0, space1);
 
-VertexData main(in VertexInput input)
+VertexData main(in VertexInput input, uint id : SV_InstanceID)
 {
     VertexData vertex;
     
-    float4 position = mul(float4(input.Position, 1.0), transform.Model);
+    float4 position = float4(particles[id].position, 0.0, 1.0);
+    position += float4(input.Position, 1.0);
+
     vertex.Position = mul(position, camera.ViewProjection);
-    
     vertex.Color = input.Color;
  
     return vertex;

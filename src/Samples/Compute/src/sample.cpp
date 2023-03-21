@@ -21,9 +21,19 @@ struct CameraBuffer {
     glm::mat4 ViewProjection;
 } camera;
 
-struct TransformBuffer {
-    glm::mat4 World;
-} transform;
+const int NUM_PARTICLES = 64;
+
+struct Particle {
+    float distance;
+    float velocity;
+    glm::vec2 position;
+} particles[NUM_PARTICLES];
+
+struct AnimationData {
+    float time;
+    float speed;
+    int particles = NUM_PARTICLES;
+} animation;
 
 template<typename TRenderBackend> requires
     rtti::implements<TRenderBackend, IRenderBackend>
@@ -140,14 +150,21 @@ void SampleApp::initBuffers(IRenderBackend* backend)
     // Update the camera. Since the descriptor set already points to the proper buffer, all changes are implicitly visible.
     this->updateCamera(*commandBuffer, *cameraStagingBuffer, *cameraBuffer);
 
-    // Next, we create the descriptor sets for the transform buffer. The transform changes with every frame. Since we have three frames in flight, we
-    // create a buffer with three elements and bind the appropriate element to the descriptor set for every frame.
-    auto& transformBindingLayout = geometryPipeline.layout()->descriptorSet(DescriptorSets::PerFrame);
-    auto& transformBufferLayout = transformBindingLayout.descriptor(0);
-    auto transformBindings = transformBindingLayout.allocateMultiple(3);
-    auto transformBuffer = m_device->factory().createBuffer("Transform", transformBufferLayout.type(), BufferUsage::Dynamic, transformBufferLayout.elementSize(), 3);
-    std::ranges::for_each(transformBindings, [&transformBufferLayout, &transformBuffer, i = 0](const auto& descriptorSet) mutable { descriptorSet->update(transformBufferLayout.binding(), *transformBuffer, i++); });
-    
+    // Create a per-frame descriptor set for the particle and animation buffers in the compute shader.
+    auto& computePipeline = m_device->state().pipeline("Compute");
+    auto& computeBindingLayout = computePipeline.layout()->descriptorSet(DescriptorSets::PerFrame);
+    auto computeBindings = computeBindingLayout.allocateMultiple(3);
+    auto& animationBufferLayout = computeBindingLayout.descriptor(0);
+    auto animationBuffer = m_device->factory().createBuffer("Animation", animationBufferLayout.type(), BufferUsage::Dynamic, animationBufferLayout.elementSize(), 3);
+    auto& particlesBufferLayout = computeBindingLayout.descriptor(1);
+    auto particlesBuffer = m_device->factory().createBuffer("Particles", particlesBufferLayout.type(), BufferUsage::Dynamic, particlesBufferLayout.elementSize(), NUM_PARTICLES * 3, true);
+
+    std::ranges::for_each(computeBindings, [&animationBufferLayout, &animationBuffer, &particlesBufferLayout, &particlesBuffer, i = 0](const auto& descriptorSet) mutable {
+        descriptorSet->update(animationBufferLayout.binding(), *animationBuffer, i);
+        descriptorSet->update(particlesBufferLayout.binding(), *particlesBuffer, i * NUM_PARTICLES, NUM_PARTICLES);
+        i++;
+    });
+
     // End and submit the command buffer.
     auto fence = m_device->bufferQueue().submit(*commandBuffer);
     m_device->bufferQueue().waitFor(fence);
@@ -157,9 +174,10 @@ void SampleApp::initBuffers(IRenderBackend* backend)
     m_device->state().add(std::move(indexBuffer));
     m_device->state().add(std::move(cameraStagingBuffer));
     m_device->state().add(std::move(cameraBuffer));
-    m_device->state().add(std::move(transformBuffer));
+    m_device->state().add(std::move(animationBuffer));
+    m_device->state().add(std::move(particlesBuffer));
     m_device->state().add("Camera Bindings", std::move(cameraBindings));
-    std::ranges::for_each(transformBindings, [this, i = 0](auto& binding) mutable { m_device->state().add(fmt::format("Transform Bindings {0}", i++), std::move(binding)); });
+    std::ranges::for_each(computeBindings, [this, i = 0](auto& binding) mutable { m_device->state().add(fmt::format("Compute Bindings {0}", i++), std::move(binding)); });
 }
 
 void SampleApp::updateCamera(const ICommandBuffer& commandBuffer, IBuffer& stagingBuffer, const IBuffer& buffer) const
