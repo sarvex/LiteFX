@@ -34,6 +34,13 @@ VulkanBuffer::VulkanBuffer(VkBuffer buffer, const BufferType& type, const UInt32
 {
 	if (!name.empty())
 		this->name() = name;
+
+	if (allocation != nullptr)
+	{
+		// Store the buffer on the allocation.
+		::vmaSetAllocationUserData(allocator, allocation, this);
+		::vmaSetAllocationName(allocator, allocation, name.c_str());
+	}
 }
 
 VulkanBuffer::~VulkanBuffer() noexcept

@@ -42,6 +42,10 @@ DirectX12Buffer::DirectX12Buffer(ComPtr<ID3D12Resource>&& buffer, const BufferTy
 		this->handle()->SetName(Widen(name).c_str());
 #endif
 	}
+
+	// Store the buffer on the allocation.
+	if (m_impl->m_allocation != nullptr)
+		m_impl->m_allocation->SetPrivateData(this);
 }
 
 DirectX12Buffer::~DirectX12Buffer() noexcept = default;

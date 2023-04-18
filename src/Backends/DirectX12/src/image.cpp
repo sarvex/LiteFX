@@ -49,6 +49,10 @@ DirectX12Image::DirectX12Image(const DirectX12Device& device, ComPtr<ID3D12Resou
 		this->handle()->SetName(Widen(name).c_str());
 #endif
 	}
+
+	// Store the image on the allocation.
+	if (m_impl->m_allocation != nullptr)
+		m_impl->m_allocation->SetPrivateData(this);
 }
 
 DirectX12Image::~DirectX12Image() noexcept = default;

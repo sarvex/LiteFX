@@ -2,9 +2,6 @@
 
 using namespace LiteFX::Rendering::Backends;
 
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
-
 // ------------------------------------------------------------------------------------------------
 // Image Base implementation.
 // ------------------------------------------------------------------------------------------------
@@ -15,7 +12,7 @@ public:
 
 private:
 	VmaAllocator m_allocator;
-	VmaAllocation m_allocationInfo;
+	VmaAllocation m_allocation;
 	Array<VkImageView> m_views;
 	Format m_format;
 	Size3d m_extent;
@@ -28,7 +25,7 @@ private:
 
 public:
 	VulkanImageImpl(VulkanImage* parent, const VulkanDevice& device, const Size3d& extent, const Format& format, const ImageDimensions& dimensions, const UInt32& levels, const UInt32& layers, const MultiSamplingLevel& samples, const bool& writable, const ImageLayout& initialLayout, VmaAllocator allocator, VmaAllocation allocation) :
-		base(parent), m_device(device), m_allocator(allocator), m_allocationInfo(allocation), m_extent(extent), m_format(format), m_dimensions(dimensions), m_levels(levels), m_layers(layers), m_writable(writable), m_samples(samples)
+		base(parent), m_device(device), m_allocator(allocator), m_allocation(allocation), m_extent(extent), m_format(format), m_dimensions(dimensions), m_levels(levels), m_layers(layers), m_writable(writable), m_samples(samples)
 	{	
 		VkImageViewCreateInfo createInfo = {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -96,6 +93,13 @@ VulkanImage::VulkanImage(const VulkanDevice& device, VkImage image, const Size3d
 {
 	if (!name.empty())
 		this->name() = name;
+
+	if (allocation != nullptr)
+	{
+		// Store the image on the allocation.
+		::vmaSetAllocationUserData(allocator, allocation, this);
+		::vmaSetAllocationName(allocator, allocation, name.c_str());
+	}
 }
 
 VulkanImage::~VulkanImage() noexcept 
@@ -103,9 +107,9 @@ VulkanImage::~VulkanImage() noexcept
 	for (auto& view : m_impl->m_views)
 		::vkDestroyImageView(m_impl->m_device.handle(), view, nullptr);
 
-	if (m_impl->m_allocator != nullptr && m_impl->m_allocationInfo != nullptr)
+	if (m_impl->m_allocator != nullptr && m_impl->m_allocation != nullptr)
 	{
-		::vmaDestroyImage(m_impl->m_allocator, this->handle(), m_impl->m_allocationInfo);
+		::vmaDestroyImage(m_impl->m_allocator, this->handle(), m_impl->m_allocation);
 		LITEFX_TRACE(VULKAN_LOG, "Destroyed image {0}", fmt::ptr(reinterpret_cast<void*>(this->handle())));
 	}
 }
@@ -117,8 +121,12 @@ const UInt32& VulkanImage::elements() const noexcept
 
 size_t VulkanImage::size() const noexcept
 {
-	if (m_impl->m_allocationInfo) [[likely]]
-		return m_impl->m_allocationInfo->GetSize();
+	if (m_impl->m_allocation) [[likely]]
+	{
+		VmaAllocationInfo allocationInfo;
+		::vmaGetAllocationInfo(m_impl->m_allocator, m_impl->m_allocation, &allocationInfo);
+		return allocationInfo.size;
+	}
 	else
 	{
 		auto elementSize = ::getSize(m_impl->m_format) * m_impl->m_extent.width() * m_impl->m_extent.height() * m_impl->m_extent.depth() * m_impl->m_layers;
@@ -141,10 +149,8 @@ size_t VulkanImage::elementSize() const noexcept
 
 size_t VulkanImage::elementAlignment() const noexcept
 {
-	if (m_impl->m_allocationInfo) [[likely]]
-		return m_impl->m_allocationInfo->GetAlignment();
-	else
-		return 0;	// Not sure about the alignment. Probably need to query from device limits.
+	// Same alignment as enforced by D3D. Actual alignment might differ when image gets allocated.
+	return 256;
 }
 
 size_t VulkanImage::alignedElementSize() const noexcept
@@ -328,7 +334,7 @@ VmaAllocator& VulkanImage::allocator() const noexcept
 
 VmaAllocation& VulkanImage::allocationInfo() const noexcept
 {
-	return m_impl->m_allocationInfo;
+	return m_impl->m_allocation;
 }
 
 VkImageView& VulkanImage::imageView(const UInt32& plane)

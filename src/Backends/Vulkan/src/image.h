@@ -2,6 +2,7 @@
 
 #include <litefx/rendering.hpp>
 #include <litefx/backends/vulkan.hpp>
+#include "vk_mem_alloc.h"
 #include "buffer.h"
 
 namespace LiteFX::Rendering::Backends {

@@ -1,4 +1,8 @@
 #include <litefx/backends/vulkan.hpp>
+
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 #include "buffer.h"
 #include "image.h"
 
@@ -25,6 +29,7 @@ public:
 		allocatorInfo.physicalDevice = device.adapter().handle();
 		allocatorInfo.instance = device.surface().instance();
 		allocatorInfo.device = device.handle();
+		allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
 
 		raiseIfFailed<RuntimeException>(::vmaCreateAllocator(&allocatorInfo, &m_allocator), "Unable to create Vulkan memory allocator.");
 	}
